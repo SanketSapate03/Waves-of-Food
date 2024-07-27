@@ -15,6 +15,7 @@ class RecentOrderItem : AppCompatActivity() {
         ActivityRecentOrderItemBinding.inflate(layoutInflater)
     }
 
+    //decalration of items
     private lateinit var allFoodNames: ArrayList<String>
     private lateinit var allFoodPrices: ArrayList<String>
     private lateinit var allFoodImages: ArrayList<String>
