@@ -27,7 +27,6 @@ class PayoutActivity : AppCompatActivity() {
     private lateinit var phone: String
     private lateinit var totalAmount: String
 
-
     private lateinit var foodItemName: ArrayList<String>
     private lateinit var foodItemPrice: ArrayList<String>
     private lateinit var foodItemDescription: ArrayList<String>
@@ -49,21 +48,19 @@ class PayoutActivity : AppCompatActivity() {
             insets
         }
 
-        //initialisation
+        // Initialization
         auth = FirebaseAuth.getInstance()
         databaseReference = FirebaseDatabase.getInstance().reference
-        //set user data
+        // Set user data
         setUserData()
 
-        //get user details from firebase
+        // Get user details from intent
         val intent = intent
         foodItemName = intent.getStringArrayListExtra("FoodItemName") as ArrayList<String>
         foodItemPrice = intent.getStringArrayListExtra("FoodItemPrice") as ArrayList<String>
-        foodItemDescription =
-            intent.getStringArrayListExtra("FoodItemDescription") as ArrayList<String>
+        foodItemDescription = intent.getStringArrayListExtra("FoodItemDescription") as ArrayList<String>
         foodItemImage = intent.getStringArrayListExtra("FoodItemImage") as ArrayList<String>
-        foodItemIngredient =
-            intent.getStringArrayListExtra("FoodItemIngredient") as ArrayList<String>
+        foodItemIngredient = intent.getStringArrayListExtra("FoodItemIngredient") as ArrayList<String>
         foodItemQuantity = intent.getIntegerArrayListExtra("FoodItemQuantity") as ArrayList<Int>
 
         totalAmount = calculateTotalAmount().toString() + "$"
@@ -75,21 +72,18 @@ class PayoutActivity : AppCompatActivity() {
             finish()
         }
 
-        //for confirm order
+        // Confirm order button
         binding.placeOrderBtn.setOnClickListener {
-
-            //get details of textview
+            // Get details from text views
             name = binding.name.text.toString().trim()
             address = binding.address.text.toString().trim()
             phone = binding.phone.text.toString().trim()
-
 
             if (name.isBlank() && address.isBlank() && phone.isBlank()) {
                 Toast.makeText(this, "Please enter all details", Toast.LENGTH_SHORT).show()
             } else {
                 placeOrder()
             }
-
         }
     }
 
@@ -97,23 +91,21 @@ class PayoutActivity : AppCompatActivity() {
         userId = auth.currentUser?.uid ?: ""
         val time = System.currentTimeMillis()
         val itemPushKey = databaseReference.child("OrderDetails").push().key
-        val orderDetails =
-            OrderDetailsModel(
-                userId,
-                name,
-                foodItemName,
-                foodItemImage,
-                foodItemPrice,
-                foodItemQuantity,
-                address,
-                totalAmount,
-                phone,
-                false,
-                false,
-                itemPushKey,
-                time
-
-            )
+        val orderDetails = OrderDetailsModel(
+            userId,
+            name,
+            foodItemName,
+            foodItemImage,
+            foodItemPrice,
+            foodItemQuantity,
+            address,
+            totalAmount,
+            phone,
+            false,
+            false,
+            itemPushKey,
+            time
+        )
 
         val orderRef = databaseReference.child("OrderDetails").child(itemPushKey!!)
         orderRef.setValue(orderDetails).addOnSuccessListener {
@@ -121,17 +113,14 @@ class PayoutActivity : AppCompatActivity() {
             bottomSheetDialog.show(supportFragmentManager, "Test")
             removeItemFromCart()
             addOrderToHistory(orderDetails)
-
-
         }
     }
 
     private fun addOrderToHistory(orderDetails: OrderDetailsModel) {
         databaseReference.child("user").child(userId).child("BuyHistory")
             .child(orderDetails.itemPushKey!!).setValue(orderDetails).addOnSuccessListener {
-
-            }
-            .addOnFailureListener {
+                // Order added successfully
+            }.addOnFailureListener {
                 Toast.makeText(this, "Failed to order", Toast.LENGTH_SHORT).show()
             }
     }
@@ -143,16 +132,9 @@ class PayoutActivity : AppCompatActivity() {
 
     private fun calculateTotalAmount(): Int {
         var totalAmount = 0
-
         for (i in 0 until foodItemName.size) {
             val price = foodItemPrice[i]
-
-            val lastChar = price.last()
-            val priceIntValue = if (lastChar == '$') {
-                price.dropLast(1).toInt()
-            } else {
-                price.toInt()
-            }
+            val priceIntValue = if (price.last() == '$') price.dropLast(1).toInt() else price.toInt()
             val quantity = foodItemQuantity[i]
             totalAmount += (priceIntValue * quantity)
         }
@@ -164,7 +146,6 @@ class PayoutActivity : AppCompatActivity() {
         if (user != null) {
             val userId = user.uid
             val userRef = databaseReference.child("user").child(userId)
-
             userRef.addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     if (snapshot.exists()) {
