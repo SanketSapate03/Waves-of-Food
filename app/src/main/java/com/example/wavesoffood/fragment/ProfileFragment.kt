@@ -46,6 +46,23 @@ class ProfileFragment : Fragment() {
 
         }
 
+        //disable field to edit
+        binding.apply {
+            name.isEnabled = false
+            email.isEnabled = false
+            address.isEnabled = false
+            phone.isEnabled = false
+        }
+
+        binding.editBtn.setOnClickListener {
+            binding.apply {
+                name.isEnabled=true
+                email.isEnabled=true
+                address.isEnabled=true
+                phone.isEnabled=true
+            }
+        }
+
         return binding.root
 
     }

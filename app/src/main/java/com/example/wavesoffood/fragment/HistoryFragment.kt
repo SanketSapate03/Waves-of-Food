@@ -1,9 +1,10 @@
 package com.example.wavesoffood.fragment
 
 import android.content.Intent
+import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
-import android.os.Parcelable
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -20,7 +21,6 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import java.io.Serializable
-
 
 class HistoryFragment : Fragment() {
     private lateinit var binding: FragmentHistoryBinding
@@ -42,11 +42,11 @@ class HistoryFragment : Fragment() {
         // Inflate the layout for this fragment
         binding = FragmentHistoryBinding.inflate(layoutInflater, container, false)
 
-        //initialise
+        //initialize
         auth = FirebaseAuth.getInstance()
         database = FirebaseDatabase.getInstance()
 
-        //retrieve and display  user order details
+        //retrieve and display user order details
         retrieveBuyHistory()
 
         //recent buy button click
@@ -54,17 +54,27 @@ class HistoryFragment : Fragment() {
             seeRecentBuyItem()
         }
 
+        binding.receivedButton.setOnClickListener {
+           updateOrderStatus()
+        }
 
         return binding.root
+    }
+
+    private fun updateOrderStatus() {
+        val itemPushKey=listOfOrderItems[0].itemPushKey
+        val completeOrderRef=database.reference.child("CompletedOrder").child(itemPushKey!!)
+        completeOrderRef.child("paymentReceived").setValue(true)
     }
 
     //to see recent item
     private fun seeRecentBuyItem() {
         listOfOrderItems.firstOrNull()?.let { recentBuy ->
             val intent = Intent(requireContext(), RecentOrderItem::class.java)
-            intent.putExtra("RecentBuyOrderItem", listOfOrderItems  as Serializable )
+            intent.putExtra("RecentBuyOrderItem", listOfOrderItems as Serializable)
+            // Add logs to verify the data being passed
+            Log.d("HistoryFragment", "Passing data: $listOfOrderItems")
             startActivity(intent)
-
         }
     }
 
@@ -92,11 +102,9 @@ class HistoryFragment : Fragment() {
             }
 
             override fun onCancelled(error: DatabaseError) {
-
+                Log.e("HistoryFragment", "Database error: $error")
             }
-
         })
-
     }
 
     //display most recent order details
@@ -105,19 +113,22 @@ class HistoryFragment : Fragment() {
         val recentOrderItem = listOfOrderItems.firstOrNull()
         recentOrderItem?.let {
             with(binding) {
-                buyAgainItemName.text = it.foodNames?.firstOrNull() ?:""
-                buyAgainItemPrice.text = it.foodPrices?.firstOrNull() ?:""
-                val image = it.foodImages?.firstOrNull() ?:""
+                buyAgainItemName.text = it.foodNames?.firstOrNull() ?: ""
+                buyAgainItemPrice.text = it.foodPrices?.firstOrNull() ?: ""
+                val image = it.foodImages?.firstOrNull() ?: ""
                 val uri = Uri.parse(image)
                 Glide.with(requireContext()).load(uri).into(buyAgainItemImage)
+                 val isOrderAccepted= listOfOrderItems[0].orderAccepted
+                if(isOrderAccepted == true){
+                    orderStatus.background.setTint(Color.GREEN)
+                    receivedButton.visibility= View.VISIBLE
+                }
 
                 //reverse the list of order items
                 listOfOrderItems.reverse()
-
             }
         }
     }
-
 
     //set up recyclerview with previous order details
     private fun setPreviouslyBuyItemsRecyclerview() {
@@ -133,15 +144,12 @@ class HistoryFragment : Fragment() {
 
         val rv = binding.historyRecyclerView
         rv.layoutManager = LinearLayoutManager(requireContext())
-        buyAgainAdapter =
-            BuyAgainAdapter(
-                buyAgainFoodName,
-                buyAgainFoodPrice,
-                buyAgainFoodImage,
-                requireContext()
-            )
+        buyAgainAdapter = BuyAgainAdapter(
+            buyAgainFoodName,
+            buyAgainFoodPrice,
+            buyAgainFoodImage,
+            requireContext()
+        )
         rv.adapter = buyAgainAdapter
     }
-
-
 }
